@@ -9,7 +9,9 @@ https://docs.google.com/spreadsheets/d/1dwSMIAPIam0PuRBkCiDI88pU3yzrqqHkDtBngUHN
 
 [Here](https://gitlab.com/s0j0hn/awae-prep/snippets/1967151.js)
 
-# Methodology for web application review
+# WIP: Methodology for web application review
+
+- TODO: Add more content and rewrite the others
 
 ## Visible Content
 + Browser Proxy (burpsuite, zap or other)
