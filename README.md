@@ -7,7 +7,7 @@ https://docs.google.com/spreadsheets/d/1dwSMIAPIam0PuRBkCiDI88pU3yzrqqHkDtBngUHN
 
 # Upgraded script for 'Fighter HTB'
 
-[Here](https://gitlab.com/s0j0hn/awae-prep/snippets/1967151.js)
+[Here](https://gitlab.com/s0j0hn/awae-prep/snippets/1967151)
 
 # WIP: Methodology for web application review
 
